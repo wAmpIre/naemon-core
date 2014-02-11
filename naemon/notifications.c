@@ -343,17 +343,20 @@ int check_service_notification_viability(service *svc, int type, int options)
 
 	/* if all parents are bad (usually just one), we shouldn't notify */
 	if (svc->parents) {
-		int bad_parents = 0, total_parents = 0;
+		int good_parents = 0;
 		servicesmember *sm;
 		for (sm = svc->parents; sm; sm = sm->next) {
 			/* @todo: tweak this so it handles hard states and whatnot */
-			if (sm->service_ptr->current_state == STATE_OK)
-				bad_parents += !!sm->service_ptr->current_state;
-			total_parents++;
+			if (sm->service_ptr->current_state == STATE_OK) {
+				good_parents++;
+				break; /* break out of for loop */
+			}
 		}
-		if (bad_parents == total_parents) {
+		if (good_parents == 0) {
 			log_debug_info(DEBUGL_NOTIFICATIONS, 1, "This service has no good parents, so notification will be blocked.\n");
 			return ERROR;
+		} else {
+			log_debug_info(DEBUGL_NOTIFICATIONS, 1, "This service has at least one good parent, so notification will be sent.\n");
 		}
 	}
 
